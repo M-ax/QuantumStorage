@@ -6,6 +6,8 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.items.ItemStackHandler;
 
+import javax.annotation.Nonnull;
+
 /**
  * Created by Gigabit101 on 06/03/2017.
  */

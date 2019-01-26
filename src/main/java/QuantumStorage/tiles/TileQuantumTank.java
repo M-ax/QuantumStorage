@@ -37,6 +37,9 @@ public class TileQuantumTank extends AdvancedTileEntity implements ITickable
 {
     FluidTank tank = new FluidTank(Integer.MAX_VALUE);
 
+    FluidStack lastFluid = null;
+    int lastFluidAmount = 0;
+
     public TileQuantumTank() {}
 
     @Override
@@ -159,7 +162,17 @@ public class TileQuantumTank extends AdvancedTileEntity implements ITickable
     @Override
     public void update()
     {
-        sync();
+        FluidStack curFluid = tank.getFluid();
+        int curFluidAmount = tank.getFluidAmount();
+
+        //Again, for the love of god why on every tick?
+        if (curFluid != lastFluid || curFluidAmount != lastFluidAmount){
+            sync();
+        }
+
+        lastFluid = curFluid;
+        lastFluidAmount = curFluidAmount;
+
         handleUpgrades();
     }
 

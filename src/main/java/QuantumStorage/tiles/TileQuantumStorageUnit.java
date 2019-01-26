@@ -13,6 +13,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -49,6 +50,14 @@ public class TileQuantumStorageUnit extends AdvancedTileEntity implements ITicka
     int INPUT = 1;
     int OUTPUT = 2;
 
+    //Monitor state change, only push TE to players if needed.
+    Item lastStorageItem = null;
+    int lastStorageCount = 0;
+    Item lastInputItem = null;
+    int lastInputCount = 0;
+    Item lastOutputItem = null;
+    int lastOutputCount = 0;
+
     public TileQuantumStorageUnit()
     {
         this.inv = new DsuInventoryHandler();
@@ -75,7 +84,7 @@ public class TileQuantumStorageUnit extends AdvancedTileEntity implements ITicka
             if (!inv.getStackInSlot(STORAGE).isEmpty())
             {
                 int size = inv.getStackInSlot(STORAGE).getMaxStackSize();
-                if (inv.getStackInSlot(OUTPUT) == ItemStack.EMPTY || inv.getStackInSlot(OUTPUT).getCount() == 0)
+                if (inv.getStackInSlot(OUTPUT).isEmpty())
                 {
                     if (inv.getStackInSlot(STORAGE).getCount() >= size)
                     {
@@ -94,13 +103,30 @@ public class TileQuantumStorageUnit extends AdvancedTileEntity implements ITicka
                     inv.getStackInSlot(STORAGE).shrink(1);
                 }
             }
-            handleUpgrades();
-            sync();
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            Item curStorageItem = inv.getStackInSlot(STORAGE).getItem();
+            int curStorageCount = inv.getStackInSlot(STORAGE).getCount();
+            Item curInputItem = inv.getStackInSlot(INPUT).getItem();
+            int curInputCount = inv.getStackInSlot(INPUT).getCount();
+            Item curOutputItem = inv.getStackInSlot(OUTPUT).getItem();
+            int curOutputCount = inv.getStackInSlot(OUTPUT).getCount();
+
+            //For the love of god don't face-fuck the client with packets if nothing has changed.
+            if (curStorageItem != lastStorageItem || curStorageCount != lastStorageCount
+                || curInputItem != lastInputItem || curInputCount != lastInputCount
+                || curOutputItem != lastOutputItem || curOutputCount != lastOutputCount){
+                sync();
+            }
+
+            lastStorageItem = curStorageItem;
+            lastStorageCount = curStorageCount;
+            lastInputItem = curInputItem;
+            lastInputCount = curInputCount;
+            lastOutputItem = curOutputItem;
+            lastOutputCount = curOutputCount;
         }
-        sync();
     }
 
     @Override
@@ -228,8 +254,6 @@ public class TileQuantumStorageUnit extends AdvancedTileEntity implements ITicka
         }
         return super.getCapability(capability, facing);
     }
-
-    public void handleUpgrades() {}
 
     @Override
     public void addInformation(ItemStack stack, @Nullable World world, List<String> tooltip, ITooltipFlag advanced)
